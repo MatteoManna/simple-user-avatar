@@ -15,8 +15,9 @@ if (!class_exists('SimpleUserAvatar_Public')) {
 
     public function __construct() {
 
-      // Override WordPress function get_avatar();
-      add_filter('get_avatar', [$this, 'get_avatar_filter'], 5, 5);
+      // Override the avatar URL. This covers get_avatar(), get_avatar_url() and
+      // get_avatar_data(), which all resolve their URL through get_avatar_data().
+      add_filter('get_avatar_data', [$this, 'get_avatar_data_filter'], 5, 2);
 
     }
 
@@ -29,85 +30,49 @@ if (!class_exists('SimpleUserAvatar_Public')) {
 
 
     /**
-     * Override of the original WordPress function get_avatar();
+     * Override the avatar URL with the user's uploaded image.
      *
      * @since  1.0
-     * @return string
+     * @return array
      */
-    public function get_avatar_filter($avatar, $id_or_email, $size, $default_value, $alt) {
+    public function get_avatar_data_filter($args, $id_or_email) {
 
       // Global $pagenow
       global $pagenow;
 
       // If pagenow is "Discussion" in WP Admin return default avatar
       if ($pagenow === 'options-discussion.php') {
-        return $avatar;
+        return $args;
       }
 
-      // Get user ID, if is numeric
+      // Get user ID from the ID, email or comment/user object
       if (is_numeric($id_or_email)) {
-
         $user_id = (int)$id_or_email;
-
-      // If is string, maybe the user email
+      } elseif (is_object($id_or_email) && isset($id_or_email->ID)) {
+        $user_id = (int)$id_or_email->ID;
+      } elseif (is_object($id_or_email) && isset($id_or_email->comment_author_email)) {
+        $user = get_user_by('email', $id_or_email->comment_author_email);
+        $user_id = isset($user->ID) ? (int)$user->ID : 0;
       } elseif (is_string($id_or_email)) {
-
-        // Find user by email
         $user = get_user_by('email', $id_or_email);
-
-        // If user doesn't exists or this is not an ID
-        if (!isset($user->ID) || !is_numeric($user->ID)) {
-          return $avatar;
-        }
-
-        $user_id = (int)$user->ID;
-
-      // If is an object
-      } elseif (is_object($id_or_email)) {
-      
-        // If is an ID
-        if (isset($id_or_email->ID) && is_numeric($id_or_email->ID)) {
-
-          $user_id = (int)$id_or_email->ID;
-        
-          // If this is an Comment Object
-        } elseif (isset($id_or_email->comment_author_email)) {
-
-          // Get user by Email
-          $user = get_user_by('email', $id_or_email->comment_author_email);
-
-          // If user doesn't exists or this is not an ID
-          if (!isset($user->ID) || !is_numeric($user->ID)) {
-            return $avatar;
-          }
-
-          $user_id = (int)$user->ID;
-        } else {
-          return $avatar;
-        }
+        $user_id = isset($user->ID) ? (int)$user->ID : 0;
+      } else {
+        $user_id = 0;
       }
 
       // Get attachment ID from user meta
       $attachment_id = get_user_meta($user_id, SUA_USER_META_KEY, true);
       if (empty($attachment_id) || !is_numeric($attachment_id)) {
-        return $avatar;
+        return $args;
       }
 
-      // Get attachment image src
-      $attachment_src = wp_get_attachment_image_src($attachment_id, 'medium');
-
-      // Override WordPress src
+      // Override WordPress URL with the uploaded image
+      $attachment_src = wp_get_attachment_image_src($attachment_id, [$args['size'], $args['size']]);
       if ($attachment_src !== false) {
-        $avatar = preg_replace('/src=("|\').*?("|\')/', "src='{$attachment_src[0]}'", $avatar);
+        $args['url'] = $attachment_src[0];
       }
 
-      // Get attachment image srcset
-      $attachment_srcset = wp_get_attachment_image_srcset($attachment_id);
-
-      // Override WordPress srcset
-      $avatar = preg_replace('/srcset=("|\').*?("|\')/', $attachment_srcset !== false ? "srcset='{$attachment_srcset}'" : '', $avatar);
-
-      return $avatar;
+      return $args;
 
     }
 

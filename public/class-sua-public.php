@@ -1,118 +1,117 @@
 <?php
-// Injection prevention
+/**
+ * Improved version of the public avatar logic.
+ *
+ * This version keeps the same intent as the original plugin, but avoids fragile
+ * HTML regex replacements and centralizes user resolution in a dedicated method.
+ *
+ */
+
 if (!defined('ABSPATH')) {
   exit;
 }
 
 if (!class_exists('SimpleUserAvatar_Public')) {
 
-  /**
-   * PHP class SimpleUserAvatar_Public
-   *
-   * @since 2.8
-   */
   class SimpleUserAvatar_Public {
 
-    public function __construct() {
-
-      // Override WordPress function get_avatar();
-      add_filter('get_avatar', [$this, 'get_avatar_filter'], 5, 5);
-
-    }
-
+    /**
+     * Size used for custom avatar attachments.
+     *
+     * @var string
+     */
+    private $attachment_size = 'medium';
 
     public static function init() {
-
-      new self;
-
+      new self();
     }
 
+    public function __construct() {
+      add_filter('get_avatar_data', [$this, 'filter_avatar_data'], 10, 2);
+    }
 
     /**
-     * Override of the original WordPress function get_avatar();
+     * Resolve a user ID from the value passed by WordPress.
      *
-     * @since  1.0
-     * @return string
+     * @param mixed $id_or_email
+     * @return int|false
      */
-    public function get_avatar_filter($avatar, $id_or_email, $size, $default_value, $alt) {
-
-      // Global $pagenow
-      global $pagenow;
-
-      // If pagenow is "Discussion" in WP Admin return default avatar
-      if ($pagenow === 'options-discussion.php') {
-        return $avatar;
+    protected function get_user_id($id_or_email) {
+      if (is_numeric($id_or_email)) {
+        return absint($id_or_email);
       }
 
-      // Get user ID, if is numeric
-      if (is_numeric($id_or_email)) {
-
-        $user_id = (int)$id_or_email;
-
-      // If is string, maybe the user email
-      } elseif (is_string($id_or_email)) {
-
-        // Find user by email
+      if (is_string($id_or_email) && !empty($id_or_email)) {
         $user = get_user_by('email', $id_or_email);
 
-        // If user doesn't exists or this is not an ID
-        if (!isset($user->ID) || !is_numeric($user->ID)) {
-          return $avatar;
+        if ($user && !empty($user->ID)) {
+          return absint($user->ID);
         }
 
-        $user_id = (int)$user->ID;
+        return false;
+      }
 
-      // If is an object
-      } elseif (is_object($id_or_email)) {
-      
-        // If is an ID
-        if (isset($id_or_email->ID) && is_numeric($id_or_email->ID)) {
+      if (is_object($id_or_email)) {
+        if (!empty($id_or_email->ID) && is_numeric($id_or_email->ID)) {
+          return absint($id_or_email->ID);
+        }
 
-          $user_id = (int)$id_or_email->ID;
-        
-          // If this is an Comment Object
-        } elseif (isset($id_or_email->comment_author_email)) {
-
-          // Get user by Email
+        if (!empty($id_or_email->comment_author_email)) {
           $user = get_user_by('email', $id_or_email->comment_author_email);
 
-          // If user doesn't exists or this is not an ID
-          if (!isset($user->ID) || !is_numeric($user->ID)) {
-            return $avatar;
+          if ($user && !empty($user->ID)) {
+            return absint($user->ID);
           }
-
-          $user_id = (int)$user->ID;
-        } else {
-          return $avatar;
         }
       }
 
-      // Get attachment ID from user meta
-      $attachment_id = get_user_meta($user_id, SUA_USER_META_KEY, true);
-      if (empty($attachment_id) || !is_numeric($attachment_id)) {
-        return $avatar;
-      }
-
-      // Get attachment image src
-      $attachment_src = wp_get_attachment_image_src($attachment_id, 'medium');
-
-      // Override WordPress src
-      if ($attachment_src !== false) {
-        $avatar = preg_replace('/src=("|\').*?("|\')/', "src='{$attachment_src[0]}'", $avatar);
-      }
-
-      // Get attachment image srcset
-      $attachment_srcset = wp_get_attachment_image_srcset($attachment_id);
-
-      // Override WordPress srcset
-      $avatar = preg_replace('/srcset=("|\').*?("|\')/', $attachment_srcset !== false ? "srcset='{$attachment_srcset}'" : '', $avatar);
-
-      return $avatar;
-
+      return false;
     }
 
+    /**
+     * Replace the default avatar with the custom attachment from user meta.
+     *
+     * @param array $args
+     * @param mixed $id_or_email
+     * @return array
+     */
+    public function filter_avatar_data($args, $id_or_email) {
+      global $pagenow;
+
+      if ($pagenow === 'options-discussion.php') {
+        return $args;
+      }
+
+      $user_id = $this->get_user_id($id_or_email);
+
+      if (!$user_id) {
+        return $args;
+      }
+
+      $attachment_id = absint(get_user_meta($user_id, SUA_USER_META_KEY, true));
+
+      if (!$attachment_id) {
+        return $args;
+      }
+
+      $image = wp_get_attachment_image_src($attachment_id, $this->attachment_size);
+
+      if ($image && !empty($image[0])) {
+        $args['url'] = $image[0];
+        // $args['width'] = absint($image[1]);
+        // $args['height'] = absint($image[2]);
+      }
+
+      $srcset = wp_get_attachment_image_srcset($attachment_id, $this->attachment_size);
+
+      if ($srcset) {
+        $args['srcset'] = $srcset;
+        $args['sizes'] = wp_get_attachment_image_sizes($attachment_id, $this->attachment_size);
+      }
+
+      return $args;
+    }
   }
 
   add_action('plugins_loaded', ['SimpleUserAvatar_Public', 'init']);
-
 }

@@ -9,7 +9,7 @@
 3. Now you have a new option in the user page;
 
 ## Contributing
-[Pull requests](https://github.com/MatteoManna/Simple-User-Avatar/pulls) are welcome. For major changes please open an issue first to discuss what you would like to change.
+[Pull requests](https://github.com/MatteoManna/simple-user-avatar/pulls) are welcome. For major changes please open an issue first to discuss what you would like to change.
 
 ## Translate
 

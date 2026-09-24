@@ -1,99 +1,93 @@
-(function($) {
+(function ($) {
+  'use strict';
 
-	'use strict';
+  const selectors = {
+    attachmentId: 'input[name="' + sua_obj.input_name + '"]',
+    attachmentAvatar: '.sua-attachment-avatar',
+    attachmentDesc: '#sua-attachment-description',
+    buttonAdd: '#btn-media-add',
+    buttonRemove: '#btn-media-remove'
+  };
 
-	// Tags name
-	var tagAttachmentId     = 'input[name="' + sua_obj.input_name + '"]';
-	var tagAttachmentAvatar = '.sua-attachment-avatar';
-	var tagAttachmentDesc   = '#sua-attachment-description';
-	var tagButtonAdd        = '#btn-media-add';
-	var tagButtonRemove     = '#btn-media-remove';
+  const elements = {
+    attachmentId: $(selectors.attachmentId),
+    attachmentAvatar: $(selectors.attachmentAvatar),
+    attachmentDesc: $(selectors.attachmentDesc),
+    buttonAdd: $(selectors.buttonAdd),
+    buttonRemove: $(selectors.buttonRemove)
+  };
 
-	// jQuery elements by tags
-	var elAttachmentId      = $(tagAttachmentId);
-	var elAttachmentAvatar  = $(tagAttachmentAvatar);
-	var elAttachmentDesc    = $(tagAttachmentDesc);
-	var elButtonAdd         = $(tagButtonAdd);
-	var elButtonRemove      = $(tagButtonRemove);
+  const preferredSizes = ['full', 'large', 'medium', 'thumbnail'];
+  const defaultAvatarSrc = sua_obj.default_avatar_src || '';
+  const defaultAvatarSrcSet = sua_obj.default_avatar_srcset || '';
 
-	// WordPress default media sizes
-	var WPMediaSizes        = ['full', 'large', 'medium', 'thumbnail'];
+  function updateAttachment(attachmentSrc, attachmentSrcSet, attachmentId) {
+    const src = attachmentSrc || defaultAvatarSrc;
+    const srcSet = attachmentSrcSet || defaultAvatarSrcSet;
+    const resolvedId = attachmentId === undefined || attachmentId === null ? '' : parseInt(attachmentId, 10);
 
-	// Get default Src and default SrcSet
-	var defaultSrc          = sua_obj.default_avatar_src;
-	var defaultSrcSet       = sua_obj.default_avatar_srcset;
+    if (!elements.attachmentAvatar.length) {
+      return;
+    }
 
+    elements.attachmentAvatar.attr({
+      src: src,
+      srcset: srcSet
+    });
 
-	/*
-	 * Update attachment
-	 *
-	 * @since  3.6
-	 * @return void
-	 */
-	function updateAttachment(attachmentSrc = '', attachmentSrcSet = '', attachmentId = null) {
+    if (elements.attachmentId.length) {
+      elements.attachmentId.val(resolvedId);
+    }
 
-		// Change the image attributes
-		elAttachmentAvatar.attr({
-			'src': attachmentSrc,
-			'srcset': attachmentSrcSet
-		});
-		
-		// Set attachment ID value
-		elAttachmentId.val(attachmentId === null ? '' : parseInt(attachmentId));
+    const hasCustomAvatar = !!resolvedId || !!src && src !== defaultAvatarSrc;
 
-		// Toggle class hidden
-		elAttachmentDesc.toggleClass('hidden');
-		elButtonRemove.toggleClass('hidden');
-	
-	}
+    elements.attachmentDesc.toggleClass('hidden', hasCustomAvatar);
+    elements.buttonRemove.toggleClass('hidden', !hasCustomAvatar);
+  }
 
+  function getBestAttachmentUrl(attachment) {
+    if (!attachment || !attachment.url) {
+      return defaultAvatarSrc;
+    }
 
-	/*
-	 * Init functions
-	 *
-	 * @since 2.8
-	 */
-	$(function() {
+    const sizes = attachment.sizes || {};
 
-		// Set click functions
-		$(document)
-			.on('click', tagButtonAdd, function() {
+    for (let i = 0; i < preferredSizes.length; i++) {
+      const size = preferredSizes[i];
 
-				// Open WordPress Media Library
-				wp.media.editor.open();
+      if (sizes[size] && sizes[size].url) {
+        return sizes[size].url;
+      }
+    }
 
-				// WP Media Editor function
-				wp.media.editor.send.attachment = function(props, attachment) {
+    return attachment.url;
+  }
 
-					// Set attachment Src to default URL
-					var attachmentSrc = attachment.url;
+  $(function () {
+    if (!window.wp || !wp.media || !wp.media.editor) {
+      return;
+    }
 
-					// If there is a smaller version I use it
-					for (const WPMediaSize of WPMediaSizes) {
-						if (typeof attachment.sizes[WPMediaSize] !== 'undefined' && typeof attachment.sizes[WPMediaSize].url !== 'undefined') {
-							attachmentSrc = attachment.sizes[WPMediaSize].url;
-						}
-					}
+    $(document)
+      .on('click', selectors.buttonAdd, function (event) {
+        event.preventDefault();
 
-					// Update Attachment
-					updateAttachment(attachmentSrc, attachmentSrc, attachment.id);
+        wp.media.editor.open();
 
-				}
+        wp.media.editor.send.attachment = function (_, attachment) {
+          const attachmentUrl = getBestAttachmentUrl(attachment);
+          const attachmentId = attachment && attachment.id ? attachment.id : '';
 
-			})
-			.on('click', tagButtonRemove, function() {
-
-				// Update Attachment
-				updateAttachment(defaultSrc, defaultSrcSet);
-
-			})
-			.on('click', tagAttachmentAvatar, function() {
-
-				// Trigger to add button
-				elButtonAdd.trigger('click');
-
-			});
-
-	});
-
+          updateAttachment(attachmentUrl, attachmentUrl, attachmentId);
+        };
+      })
+      .on('click', selectors.buttonRemove, function (event) {
+        event.preventDefault();
+        updateAttachment(defaultAvatarSrc, defaultAvatarSrcSet, '');
+      })
+      .on('click', selectors.attachmentAvatar, function (event) {
+        event.preventDefault();
+        elements.buttonAdd.trigger('click');
+      });
+  });
 })(jQuery);

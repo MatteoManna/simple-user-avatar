@@ -1,4 +1,4 @@
-@import 'variables';
+@use 'colors';
 
 /* Set style for the avatar picture */
 .sua-attachment-avatar {
@@ -12,21 +12,19 @@
 
   /* Set style for buttons */
   #btn-media-remove {
-    color: $white;
-    border-color: $red3;
-    background: $red1;
+    color: colors.$white;
+    border-color: colors.$red3;
+    background: colors.$red1;
 
     &:hover {
-      background: $red2;
+      background: colors.$red2;
+    }
+
+    &:focus,
+    &:focus-visible {
+      box-shadow: 0 0 0 1px colors.$red3;
     }
   }
-
-  #btn-media-remove {
-    &:focus {
-      box-shadow: 0 0 0 1px $red3;
-    }
-  }
-
 }
 
 /* Hide WordPress default avatar */

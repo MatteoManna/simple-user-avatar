@@ -1,0 +1,12 @@
+{
+  "name": "simple-user-avatar",
+  "private": true,
+  "scripts": {
+    "build:js": "terser admin/js/scripts.js --compress --mangle --output admin/js/scripts.min.js",
+    "watch:js": "chokidar 'admin/js/scripts.js' -c 'npm run build:js'"
+  },
+  "devDependencies": {
+    "chokidar-cli": "^3.0.0",
+    "terser": "^5.39.0"
+  }
+}

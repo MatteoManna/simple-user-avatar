@@ -52,7 +52,7 @@ if (!class_exists('SimpleUserAvatar_Admin')) {
 
       wp_enqueue_media();
       wp_enqueue_style('sua', plugins_url('/css/style.min.css', __FILE__), [], SUA_PLUGIN_VERSION, 'all');
-      wp_enqueue_script('sua', plugins_url('/js/scripts.js', __FILE__), ['jquery'], SUA_PLUGIN_VERSION, true);
+      wp_enqueue_script('sua', plugins_url('/js/scripts.min.js', __FILE__), ['jquery'], SUA_PLUGIN_VERSION, true);
 
       if (!empty($current_user->user_email)) {
         $default_avatar_url = $this->get_default_avatar_url_by_email($current_user->user_email, $this->avatar_size);

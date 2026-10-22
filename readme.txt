@@ -5,7 +5,7 @@ Donate link: https://www.paypal.com/donate/?cmd=_donations&business=matteomanna8
 Tags: avatar, user, picture, gravatar, media library
 Requires at least: 4.0
 Tested up to: 7.1
-Stable tag: 5.2
+Stable tag: 5.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -50,6 +50,10 @@ No, it's really simple. Add/Remove buttons, stop.
 
 == Changelog ==
 
+
+= 5.3 =
+* Release Date - 22 October 2026
+* Minified the JavaScript file
 
 = 5.2 =
 * Release Date - 25 September 2026

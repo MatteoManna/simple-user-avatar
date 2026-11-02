@@ -5,7 +5,7 @@ Donate link: https://www.paypal.com/donate/?cmd=_donations&business=matteomanna8
 Tags: avatar, user, picture, gravatar, media library
 Requires at least: 4.0
 Tested up to: 7.1
-Stable tag: 5.3
+Stable tag: 5.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,6 +49,12 @@ No, it's really simple. Add/Remove buttons, stop.
 
 
 == Changelog ==
+
+
+= 5.4 =
+* Fix default avatar preview when editing another user's profile
+* Serve custom avatars at the requested size
+* Optimize selected-image previews
 
 
 = 5.3 =

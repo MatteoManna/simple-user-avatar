@@ -15,13 +15,6 @@ if (!class_exists('SimpleUserAvatar_Public')) {
 
   class SimpleUserAvatar_Public {
 
-    /**
-     * Size used for custom avatar attachments.
-     *
-     * @var string
-     */
-    private $attachment_size = 'medium';
-
     public static function init() {
       new self();
     }
@@ -94,7 +87,9 @@ if (!class_exists('SimpleUserAvatar_Public')) {
         return $args;
       }
 
-      $image = wp_get_attachment_image_src($attachment_id, $this->attachment_size);
+      $avatar_size = !empty($args['size']) ? absint($args['size']) : 96;
+      $image_size = [$avatar_size, $avatar_size];
+      $image = wp_get_attachment_image_src($attachment_id, $image_size);
 
       if ($image && !empty($image[0])) {
         $args['url'] = $image[0];
@@ -102,11 +97,11 @@ if (!class_exists('SimpleUserAvatar_Public')) {
         // $args['height'] = absint($image[2]);
       }
 
-      $srcset = wp_get_attachment_image_srcset($attachment_id, $this->attachment_size);
+      $srcset = wp_get_attachment_image_srcset($attachment_id, $image_size);
 
       if ($srcset) {
         $args['srcset'] = $srcset;
-        $args['sizes'] = wp_get_attachment_image_sizes($attachment_id, $this->attachment_size);
+        $args['sizes'] = wp_get_attachment_image_sizes($attachment_id, $image_size);
       }
 
       return $args;

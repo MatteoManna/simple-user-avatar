@@ -48,15 +48,16 @@ if (!class_exists('SimpleUserAvatar_Admin')) {
      * Enqueue JS and CSS used in admin screens.
      */
     public function custom_admin_enqueue_scripts() {
-      global $current_user;
-
       wp_enqueue_media();
       wp_enqueue_style('sua', plugins_url('/css/style.min.css', __FILE__), [], SUA_PLUGIN_VERSION, 'all');
       wp_enqueue_script('sua', plugins_url('/js/scripts.min.js', __FILE__), ['jquery'], SUA_PLUGIN_VERSION, true);
 
-      if (!empty($current_user->user_email)) {
-        $default_avatar_url = $this->get_default_avatar_url_by_email($current_user->user_email, $this->avatar_size);
-        $default_avatar_url_2x = $this->get_default_avatar_url_by_email($current_user->user_email, $this->avatar_size * 2);
+      $profile_user_id = isset($_GET['user_id']) ? absint(wp_unslash($_GET['user_id'])) : get_current_user_id();
+      $profile_user = get_userdata($profile_user_id);
+
+      if ($profile_user && !empty($profile_user->user_email)) {
+        $default_avatar_url = $this->get_default_avatar_url_by_email($profile_user->user_email, $this->avatar_size);
+        $default_avatar_url_2x = $this->get_default_avatar_url_by_email($profile_user->user_email, $this->avatar_size * 2);
 
         wp_localize_script('sua', 'sua_obj', [
           'default_avatar_src' => $default_avatar_url,

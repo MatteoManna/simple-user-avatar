@@ -17,7 +17,7 @@
     buttonRemove: $(selectors.buttonRemove)
   };
 
-  const preferredSizes = ['full', 'large', 'medium', 'thumbnail'];
+  const preferredSizes = ['thumbnail', 'medium', 'large', 'full'];
   const defaultAvatarSrc = sua_obj.default_avatar_src || '';
   const defaultAvatarSrcSet = sua_obj.default_avatar_srcset || '';
 

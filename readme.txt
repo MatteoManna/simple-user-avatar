@@ -52,10 +52,10 @@ No, it's really simple. Add/Remove buttons, stop.
 
 
 = 5.4 =
+* Release Date - 2 November 2026
 * Fix default avatar preview when editing another user's profile
 * Serve custom avatars at the requested size
 * Optimize selected-image previews
-
 
 = 5.3 =
 * Release Date - 22 October 2026
